@@ -1,11 +1,10 @@
 import { Chess } from 'chess.js';
 
 /**
- * Unicode chess piece mapping
+ * Unicode chess piece mapping (using solid shapes for opaque style)
  */
 const PIECE_SYMBOLS = {
-  wk: '♔', wq: '♕', wr: '♖', wb: '♗', wn: '♘', wp: '♙',
-  bk: '♚', bq: '♛', br: '♜', bb: '♝', bn: '♞', bp: '♟',
+  k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
 };
 
 /**
@@ -34,17 +33,6 @@ const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1'];
 
 /**
  * Draw a chessboard onto a 2D canvas context.
- *
- * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
- * @param {number} size - Canvas size (square)
- * @param {string} fen - FEN string for the board position
- * @param {number} faceIndex - Index of this face (0-5)
- * @param {object} options - Additional rendering options
- * @param {boolean} options.isActive - Whether this is the currently active face
- * @param {string|null} options.selectedSquare - Currently selected square (e.g., 'e2')
- * @param {Array} options.legalMoves - Array of legal move objects from chess.js
- * @param {string|null} options.lastMoveFrom - Last move source square
- * @param {string|null} options.lastMoveTo - Last move target square
  */
 export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
   const {
@@ -53,6 +41,7 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
     legalMoves = [],
     lastMoveFrom = null,
     lastMoveTo = null,
+    isFlipped = false,
   } = options;
 
   const chess = new Chess(fen);
@@ -80,8 +69,10 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
   // Draw squares
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
-      const x = col * sqSize;
-      const y = row * sqSize;
+      const drawRow = isFlipped ? 7 - row : row;
+      const drawCol = isFlipped ? 7 - col : col;
+      const x = drawCol * sqSize;
+      const y = drawRow * sqSize;
       const isLight = (row + col) % 2 === 0;
       const square = FILES[col] + RANKS[row];
 
@@ -120,9 +111,11 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
   // Handle last move squares (need to redo because of `continue`)
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
+      const drawRow = isFlipped ? 7 - row : row;
+      const drawCol = isFlipped ? 7 - col : col;
       const square = FILES[col] + RANKS[row];
-      const x = col * sqSize;
-      const y = row * sqSize;
+      const x = drawCol * sqSize;
+      const y = drawRow * sqSize;
       const isLight = (row + col) % 2 === 0;
 
       if (square === lastMoveFrom || square === lastMoveTo) {
@@ -149,19 +142,20 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
     for (let col = 0; col < 8; col++) {
       const piece = board[row][col];
       if (piece) {
-        const key = piece.color + piece.type;
-        const symbol = PIECE_SYMBOLS[key];
+        const symbol = PIECE_SYMBOLS[piece.type];
         if (symbol) {
-          const x = col * sqSize + sqSize / 2;
-          const y = row * sqSize + sqSize / 2 + 2;
+          const drawRow = isFlipped ? 7 - row : row;
+          const drawCol = isFlipped ? 7 - col : col;
+          const x = drawCol * sqSize + sqSize / 2;
+          const y = drawRow * sqSize + sqSize / 2 + 2;
 
-          // Piece
-          ctx.fillStyle = piece.color === 'w' ? '#ffffff' : '#000000';
+          // Piece fill
+          ctx.fillStyle = piece.color === 'w' ? '#ffffff' : '#222222';
           ctx.fillText(symbol, x, y);
 
           // Outline
           ctx.strokeStyle = piece.color === 'w' ? '#000000' : '#ffffff';
-          ctx.lineWidth = piece.color === 'w' ? 1.5 : 1;
+          ctx.lineWidth = Math.max(1, fontSize * 0.04);
           ctx.strokeText(symbol, x, y);
         }
       }
@@ -172,8 +166,10 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
       const square = FILES[col] + RANKS[row];
-      const x = col * sqSize + sqSize / 2;
-      const y = row * sqSize + sqSize / 2;
+      const drawRow = isFlipped ? 7 - row : row;
+      const drawCol = isFlipped ? 7 - col : col;
+      const x = drawCol * sqSize + sqSize / 2;
+      const y = drawRow * sqSize + sqSize / 2;
 
       if (legalTargets.has(square)) {
         if (legalCaptures.has(square)) {
@@ -233,5 +229,6 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
  * Draw a mini-chessboard for the die texture (simplified, no interaction highlights)
  */
 export function drawDieChessboard(ctx, size, fen, faceIndex, isActive = false) {
-  drawChessboard(ctx, size, fen, faceIndex, { isActive });
+  drawChessboard(ctx, size, fen, faceIndex, { isActive, isFlipped: false });
 }
+

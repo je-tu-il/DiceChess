@@ -33,9 +33,10 @@ export default function UIOverlay() {
   useEffect(() => {
     if (gameMode === 'online_host' && phase === 'WAITING_FOR_OPPONENT') {
       if (!peerManager.peer) {
+        // If we have roomId (due to takeover), force it. Otherwise undefined.
         peerManager.initialize(true, (id) => {
           setLocalRoomId(id);
-        });
+        }, undefined, roomId || undefined);
       }
       peerManager.onConnection(() => {
         const state = useGameStore.getState();
@@ -92,11 +93,13 @@ export default function UIOverlay() {
       }
 
       peerManager.onClose(() => {
-        useGameStore.getState().setGameOverMsg('Host disconnected.');
-        setTimeout(() => {
+        const store = useGameStore.getState();
+        if (store.phase !== 'MENU') {
+          // Host Takeover! The host dropped, so we become the host using the SAME room ID.
           peerManager.destroy();
-          useGameStore.getState().backToMenu();
-        }, 3000);
+          store.setGameMode('online_host');
+          store.setPhase('WAITING_FOR_OPPONENT');
+        }
       });
 
       peerManager.onData((data) => {
@@ -242,7 +245,7 @@ export default function UIOverlay() {
             <input 
               id="room-code-input"
               className="room-id-input"
-              value={localRoomId || '...'} 
+              value={localRoomId || roomId || '...'} 
               readOnly 
               onClick={(e) => e.target.select()}
             />

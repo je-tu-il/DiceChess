@@ -38,6 +38,7 @@ export default function ActiveBoardPanel() {
   const promoteAndMove = useGameStore((s) => s.promoteAndMove);
   const handleResign = useGameStore((s) => s.handleResign);
   const setGameOverMsg = useGameStore((s) => s.setGameOverMsg);
+  const myColor = useGameStore((s) => s.myColor);
 
   // Determine which FEN to show
   let fen = viewedFace !== null ? games[viewedFace] : null;
@@ -69,8 +70,9 @@ export default function ActiveBoardPanel() {
       legalMoves: (phase === 'PLAYER_TURN' && isCurrentTop) ? legalMoves : [],
       lastMoveFrom: null,
       lastMoveTo: null,
+      isFlipped: myColor === 'b',
     });
-  }, [fen, viewedFace, topFace, viewMoveIndex, selectedSquare, legalMoves, phase]);
+  }, [fen, viewedFace, topFace, viewMoveIndex, selectedSquare, legalMoves, phase, myColor]);
 
   // Handle click on the board canvas
   const handleCanvasClick = useCallback(
@@ -94,15 +96,20 @@ export default function ActiveBoardPanel() {
       const x = (e.clientX - rect.left) * scaleX;
       const y = (e.clientY - rect.top) * scaleY;
 
-      const col = Math.floor(x / (BOARD_SIZE / 8));
-      const row = Math.floor(y / (BOARD_SIZE / 8));
+      let col = Math.floor(x / (BOARD_SIZE / 8));
+      let row = Math.floor(y / (BOARD_SIZE / 8));
+
+      if (myColor === 'b') {
+        col = 7 - col;
+        row = 7 - row;
+      }
 
       if (col < 0 || col > 7 || row < 0 || row > 7) return;
 
       const square = FILES[col] + RANKS[row];
       selectSquare(square);
     },
-    [phase, topFace, viewedFace, viewMoveIndex, fen, selectSquare, gameMode]
+    [phase, topFace, viewedFace, viewMoveIndex, fen, selectSquare, gameMode, myColor]
   );
 
   if (viewedFace === null || fen === null) return null;

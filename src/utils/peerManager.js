@@ -10,11 +10,11 @@ class PeerManager {
     this.isHost = false;
   }
 
-  initialize(isHost, onOpen, onError) {
+  initialize(isHost, onOpen, onError, forceId) {
     this.isHost = isHost;
     
-    // Generate a short 6 character room code
-    const shortId = isHost ? Math.random().toString(36).substring(2, 8).toUpperCase() : undefined;
+    // Generate a short 6 character room code or use forceId
+    const shortId = isHost ? (forceId || Math.random().toString(36).substring(2, 8).toUpperCase()) : undefined;
 
     this.peer = new Peer(shortId, {
       config: {
@@ -44,6 +44,13 @@ class PeerManager {
     this.peer.on('error', (err) => {
       console.error('PeerJS error:', err);
       if (onError) onError(err);
+    });
+
+    this.peer.on('disconnected', () => {
+      // Reconnect to signaling server if disconnected
+      if (!this.peer.destroyed) {
+        this.peer.reconnect();
+      }
     });
   }
 

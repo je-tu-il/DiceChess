@@ -5,7 +5,7 @@ import useGameStore from '../store/gameStore';
 import { drawDieChessboard } from '../utils/drawChessboard';
 
 const DIE_SIZE = 2;
-const TEX_SIZE = 512;
+const TEX_SIZE = 256;
 
 /**
  * 6 preset roll animations. Each leads to a specific face on top.
@@ -146,13 +146,25 @@ export default function AnimatedDie() {
     }
   }, [phase, rollCount]);
 
+  const prevGames = useRef([...games]);
+  const prevTopFace = useRef(topFace);
+
   // Update textures whenever games or topFace change
   useEffect(() => {
     canvases.forEach((canvas, i) => {
-      const ctx = canvas.getContext('2d');
-      drawDieChessboard(ctx, TEX_SIZE, games[i], i, topFace === i);
-      textures[i].needsUpdate = true;
+      // Only draw if the game FEN changed, or if the topFace highlight state for this face changed
+      const gameChanged = prevGames.current[i] !== games[i];
+      const topFaceChanged = (prevTopFace.current === i) !== (topFace === i);
+      
+      if (gameChanged || topFaceChanged || !animState.current.initializedTextures) {
+        const ctx = canvas.getContext('2d');
+        drawDieChessboard(ctx, TEX_SIZE, games[i], i, topFace === i);
+        textures[i].needsUpdate = true;
+        prevGames.current[i] = games[i];
+      }
     });
+    prevTopFace.current = topFace;
+    animState.current.initializedTextures = true;
   }, [games, topFace, canvases, textures]);
 
   // Animation loop

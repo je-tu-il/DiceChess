@@ -42,6 +42,7 @@ const useGameStore = create((set, get) => ({
   gameOverMsg: null,
 
   setPhase: (phase) => set({ phase }),
+  setGameMode: (gameMode) => set({ gameMode }),
 
   startGame: (mode, roomId = null, myColor = 'w') => {
     set({
