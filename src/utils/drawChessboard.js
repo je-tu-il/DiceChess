@@ -1,4 +1,5 @@
 import { Chess } from 'chess.js';
+import { pieceImages, imagesLoaded } from './pieceImages';
 
 /**
  * Unicode chess piece mapping (using solid shapes for opaque style)
@@ -45,7 +46,6 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
   } = options;
 
   const chess = new Chess(fen);
-  const board = chess.board();
   const sqSize = size / 8;
 
   // Check state for highlighting
@@ -54,7 +54,7 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
     const turn = chess.turn();
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
-        const piece = board[r][c];
+        const piece = chess.get(FILES[c] + RANKS[r]);
         if (piece && piece.type === 'k' && piece.color === turn) {
           kingInCheckSquare = FILES[c] + RANKS[r];
         }
@@ -133,30 +133,39 @@ export function drawChessboard(ctx, size, fen, faceIndex, options = {}) {
   }
 
   // Draw pieces
-  const fontSize = Math.floor(sqSize * 0.75);
-  ctx.font = `${fontSize}px "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
-      const piece = board[row][col];
+      const piece = chess.get(FILES[col] + RANKS[row]);
       if (piece) {
-        const symbol = PIECE_SYMBOLS[piece.type];
-        if (symbol) {
-          const drawRow = isFlipped ? 7 - row : row;
-          const drawCol = isFlipped ? 7 - col : col;
-          const x = drawCol * sqSize + sqSize / 2;
-          const y = drawRow * sqSize + sqSize / 2 + 2;
+        const drawRow = isFlipped ? 7 - row : row;
+        const drawCol = isFlipped ? 7 - col : col;
 
-          // Piece fill
-          ctx.fillStyle = piece.color === 'w' ? '#ffffff' : '#222222';
-          ctx.fillText(symbol, x, y);
+        const x = drawCol * sqSize;
+        const y = drawRow * sqSize;
+        
+        const pieceKey = piece.color + piece.type;
+        
+        if (imagesLoaded && pieceImages[pieceKey]) {
+          // Draw SVG
+          ctx.drawImage(pieceImages[pieceKey], x, y, sqSize, sqSize);
+        } else {
+          // Fallback to text
+          const isWhite = piece.color === 'w';
+          const symbol = PIECE_SYMBOLS[piece.type];
 
-          // Outline
-          ctx.strokeStyle = piece.color === 'w' ? '#000000' : '#ffffff';
-          ctx.lineWidth = Math.max(1, fontSize * 0.04);
-          ctx.strokeText(symbol, x, y);
+          ctx.font = `${sqSize * 0.7}px Arial`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const textX = x + sqSize / 2;
+          const textY = y + sqSize / 2 + sqSize * 0.05;
+
+          // Simple text rendering without glowing outlines
+          ctx.fillStyle = isWhite ? '#ffffff' : '#000000';
+          ctx.strokeStyle = isWhite ? '#000000' : '#444444';
+          ctx.lineWidth = isWhite ? 2 : 1;
+          
+          ctx.strokeText(symbol, textX, textY);
+          ctx.fillText(symbol, textX, textY);
         }
       }
     }

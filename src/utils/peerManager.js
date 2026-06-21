@@ -36,8 +36,11 @@ class PeerManager {
           conn.close();
           return;
         }
-        this.setupConnection(conn);
-        if (this.onConnectionCallback) this.onConnectionCallback();
+        // CRITICAL: Wait for the data channel to actually open before declaring connection ready!
+        conn.on('open', () => {
+          this.setupConnection(conn);
+          if (this.onConnectionCallback) this.onConnectionCallback();
+        });
       }
     });
 
@@ -72,13 +75,46 @@ class PeerManager {
     this.connection = conn;
     
     this.connection.on('data', (data) => {
+      if (data && data.type === 'PING') {
+        this.send({ type: 'PONG' });
+        return;
+      }
+      if (data && data.type === 'PONG') {
+        this.lastPong = Date.now();
+        return;
+      }
       if (this.onDataCallback) this.onDataCallback(data);
     });
 
     this.connection.on('close', () => {
-      this.connection = null;
-      if (this.onCloseCallback) this.onCloseCallback();
+      this.handleClose();
     });
+
+    // Heartbeat setup
+    this.lastPong = Date.now();
+    this.pingInterval = setInterval(() => {
+      if (this.connection && this.connection.open) {
+        this.send({ type: 'PING' });
+        if (Date.now() - this.lastPong > 5000) { // 5s timeout
+          console.log("Peer connection timeout");
+          this.handleClose();
+        }
+      }
+    }, 2000);
+  }
+
+  handleClose() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+    if (this.connection) {
+      // Avoid recursive calls if close event fires multiple times
+      const c = this.connection;
+      this.connection = null;
+      c.close();
+    }
+    if (this.onCloseCallback) this.onCloseCallback();
   }
 
   send(data) {
@@ -100,13 +136,14 @@ class PeerManager {
   }
 
   disconnect() {
-    if (this.connection) {
-      this.connection.close();
-      this.connection = null;
-    }
+    this.handleClose();
   }
 
   destroy() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
     if (this.peer) {
       this.peer.destroy();
       this.peer = null;

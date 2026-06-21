@@ -39,6 +39,7 @@ const useGameStore = create((set, get) => ({
   myColor: 'w', // only relevant for online
   roomId: null,
   peerError: null,
+  menuMsg: null,
   gameOverMsg: null,
 
   setPhase: (phase) => set({ phase }),
@@ -62,11 +63,12 @@ const useGameStore = create((set, get) => ({
       currentPlayer: 'w',
       myColor,
       roomId,
+      menuMsg: null,
       gameOverMsg: null,
     });
   },
 
-  backToMenu: () => {
+  backToMenu: (msg = null) => {
     set({
       phase: 'MENU',
       gameMode: null,
@@ -84,6 +86,7 @@ const useGameStore = create((set, get) => ({
       currentPlayer: 'w',
       roomId: null,
       peerError: null,
+      menuMsg: msg,
       gameOverMsg: null,
     });
   },
@@ -93,19 +96,30 @@ const useGameStore = create((set, get) => ({
     set((s) => ({ rollCount: s.rollCount + 1 }));
   },
 
-  syncState: (data) => {
-    set({
+  syncState: (data) => set((s) => {
+    // Determine the correct phase for the joiner
+    const assignedColor = data.hostColor === 'w' ? 'b' : 'w';
+    let newPhase = data.phase;
+
+    // If the game was active (topFace !== null) and not GAME_OVER
+    // We infer the joiner's phase from currentPlayer and assignedColor
+    if (data.topFace !== null && data.phase !== 'GAME_OVER') {
+      newPhase = (data.currentPlayer === assignedColor) ? 'PLAYER_TURN' : 'OPPONENT_TURN';
+    }
+
+    return {
+      myColor: assignedColor,
       games: data.games,
       moveHistory: data.moveHistory,
       boardStatus: data.boardStatus,
       topFace: data.topFace,
-      viewedFace: data.topFace,
       rollTargetFace: data.rollTargetFace,
       rollCount: data.rollCount,
-    });
-    // Re-evaluate whose turn it is
-    get().setTopFace(data.topFace);
-  },
+      phase: newPhase,
+      currentPlayer: data.currentPlayer,
+      viewedFace: data.topFace,
+    };
+  }),
 
   setViewedFace: (faceIndex) => {
     set({ viewedFace: faceIndex, selectedSquare: null, legalMoves: [] });

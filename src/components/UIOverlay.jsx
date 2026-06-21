@@ -52,7 +52,8 @@ export default function UIOverlay() {
               rollTargetFace: state.rollTargetFace,
               rollCount: state.rollCount,
               phase: state.phase,
-              currentPlayer: state.currentPlayer
+              currentPlayer: state.currentPlayer,
+              hostColor: state.myColor
             }
           });
           // Restore host's phase
@@ -83,12 +84,16 @@ export default function UIOverlay() {
       if (!peerManager.peer) {
         peerManager.initialize(false, () => {
           peerManager.connect(roomId, () => {
-            setPhase('READY');
+            if (useGameStore.getState().phase === 'CONNECTING') {
+              setPhase('READY');
+            }
           });
         });
       } else {
         peerManager.connect(roomId, () => {
-          setPhase('READY');
+          if (useGameStore.getState().phase === 'CONNECTING') {
+            setPhase('READY');
+          }
         });
       }
 
@@ -115,8 +120,8 @@ export default function UIOverlay() {
         } else if (data.type === 'ROLL') {
           state.rollDie(data.face);
         } else if (data.type === 'KICK') {
-          state.setGameOverMsg('You were kicked by the host.');
           peerManager.destroy();
+          state.backToMenu("Vous avez été exclu par l'hôte.");
         }
       });
     }
@@ -200,8 +205,14 @@ export default function UIOverlay() {
           {gameMode === 'online_host' && phase !== 'WAITING_FOR_OPPONENT' && phase !== 'GAME_OVER' && (
             <button className="back-menu-btn" style={{ fontSize: '14px', width: 'auto', padding: '0 10px', background: '#ff4444' }} onClick={() => {
               peerManager.send({ type: 'KICK' });
-              peerManager.disconnect();
-              setGameOverMsg('You kicked the opponent.');
+              // Disconnect the current peer connection, but don't destroy the PeerJS instance
+              // so we can accept new connections
+              if (peerManager.connection) {
+                peerManager.connection.close();
+                peerManager.connection = null;
+              }
+              // Return host to waiting phase
+              setPhase('WAITING_FOR_OPPONENT');
             }} title="Kick Opponent">
               Kick
             </button>
@@ -234,6 +245,20 @@ export default function UIOverlay() {
             </div>
           );
         })}
+        
+        {/* View 3D Die Button */}
+        {(phase === 'PLAYER_TURN' || phase === 'OPPONENT_TURN' || phase === 'GAME_OVER') && (
+          <div 
+            onClick={() => {
+              setViewedFace(null);
+            }}
+            className={`board-indicator ${viewedFace === null ? 'active' : ''}`}
+            style={{ marginTop: '15px', fontSize: '20px' }}
+            title="Voir le dé 3D"
+          >
+            🎲
+          </div>
+        )}
       </div>
 
       {/* Center Messages */}

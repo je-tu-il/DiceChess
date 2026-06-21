@@ -151,20 +151,28 @@ export default function AnimatedDie() {
 
   // Update textures whenever games or topFace change
   useEffect(() => {
+    let timeoutIds = [];
     canvases.forEach((canvas, i) => {
       // Only draw if the game FEN changed, or if the topFace highlight state for this face changed
       const gameChanged = prevGames.current[i] !== games[i];
       const topFaceChanged = (prevTopFace.current === i) !== (topFace === i);
       
       if (gameChanged || topFaceChanged || !animState.current.initializedTextures) {
-        const ctx = canvas.getContext('2d');
-        drawDieChessboard(ctx, TEX_SIZE, games[i], i, topFace === i);
-        textures[i].needsUpdate = true;
-        prevGames.current[i] = games[i];
+        const id = setTimeout(() => {
+          const ctx = canvas.getContext('2d');
+          drawDieChessboard(ctx, TEX_SIZE, games[i], i, topFace === i);
+          textures[i].needsUpdate = true;
+          prevGames.current[i] = games[i];
+        }, i * 50); // Stagger by 50ms per face
+        timeoutIds.push(id);
       }
     });
     prevTopFace.current = topFace;
     animState.current.initializedTextures = true;
+    
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+    };
   }, [games, topFace, canvases, textures]);
 
   // Animation loop

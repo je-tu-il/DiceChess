@@ -4,6 +4,7 @@ import { peerManager } from '../utils/peerManager';
 
 export default function GameModeMenu() {
   const startGame = useGameStore((s) => s.startGame);
+  const menuMsg = useGameStore((s) => s.menuMsg);
   const [hoveredMode, setHoveredMode] = useState(null);
 
   return (
@@ -22,6 +23,11 @@ export default function GameModeMenu() {
 
         {/* Logo */}
         <div className="menu-logo">
+          {menuMsg && (
+            <div className="menu-msg error-msg" style={{ marginBottom: '20px', color: '#ff4444', fontWeight: 'bold' }}>
+              {menuMsg}
+            </div>
+          )}
           <div className="menu-dice-icon">
             <span className="dice-face">♟</span>
           </div>
