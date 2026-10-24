@@ -1,52 +1,60 @@
-# DiceChess 🎲♟️
+# 🎲♟️ DiceChess — Échecs 3D Multijoueur sur Dé à 6 Faces
 
-DiceChess is a fast-paced, 3D chess variant where you battle an opponent across **6 different chessboards simultaneously**. The game takes place on the 6 faces of a 3D die. Roll the die to switch faces, track your victories, and conquer the cube!
+[![Live Demo](https://img.shields.io/badge/Demo%20en%20Ligne-Jouer%20sur%20GitHub%20Pages-success?style=for-the-badge&logo=github)](https://je-tu-il.github.io/DiceChess/)
+[![React](https://img.shields.io/badge/React-18-61DAFB.svg?logo=react)](https://react.dev/)
+[![Three.js](https://img.shields.io/badge/3D-Three.js%20%2F%20R3F-black.svg?logo=three.js)](https://threejs.org/)
+[![P2P WebRTC](https://img.shields.io/badge/Multiplayer-PeerJS%20WebRTC-FF6B6B.svg)](https://peerjs.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🌟 Key Features
+> Une variante d'échecs en 3D où vous affrontez votre adversaire sur **6 échiquiers indépendants simultanément**, situés sur les 6 faces d'un dé cubique 3D.  
+> À chaque coup joué, le dé roule automatiquement sur une face aléatoire non terminée. Conquérez un maximum de faces pour remporter la victoire !
 
-- **6 Simultaneous Games**: Play six independent chess games on the faces of a 3D die. Checkmate your opponent on a single face to claim it, and play continues on the remaining faces until all are conquered!
-- **Automatic Die Rolls**: The die rolls automatically after every move, randomly selecting an unfinished face for the next turn.
-- **Multiple Game Modes**:
-  - **Online Multiplayer (P2P)**: Connect directly with friends using a simple 6-character room code via WebRTC. No servers needed!
-  - **Play vs Bot**: Hone your skills against an integrated AI opponent.
-  - **Local Multiplayer**: Play with a friend on the same device.
-- **Host Takeover & Reconnection**: Robust P2P system. If the host disconnects, the game automatically pauses and the remaining player takes over as the new host. Rejoining seamlessly resumes the game right where you left off.
-- **Premium Aesthetics**: High-definition 3D die animations, standard Lichess SVG pieces for perfect readability, and sleek dark-mode UI. You can even toggle between the 2D chessboard and the spinning 3D die mid-game.
-- **Moderation Tools**: The host can easily kick disruptive players and return to the waiting room to invite someone else.
+---
 
-## 🛠️ Technologies Used
+## ⚡ Jouer Immédiatement (Sans Installation)
 
-- **React** for UI and component architecture.
-- **React Three Fiber (R3F) & Three.js** for the 3D scene, physics, and die animations.
-- **PeerJS** for WebRTC peer-to-peer multiplayer connectivity.
-- **Zustand** for lightweight and fast global state management.
-- **Chess.js** for chess move validation, FEN state logic, and bot moves.
-- **Vite** for blazing fast builds.
+👉 **[Lancer une partie en ligne : https://je-tu-il.github.io/DiceChess/](https://je-tu-il.github.io/DiceChess/)**
 
-## 🚀 Getting Started
+- 🤖 **Jouer contre l'ordinateur (IA)** : Idéal pour s'entraîner en solo.
+- 👥 **Multijoueur Local** : Deux joueurs sur le même écran.
+- 🌐 **Multijoueur en Ligne (P2P)** : Partagez simplement un code de salon à 6 caractères avec un ami via WebRTC (connexion directe sans compte ni serveur).
 
-### Installation
+---
 
-1. Clone this repository.
-2. Install the dependencies:
-   ```bash
-   npm install
-   ```
+## ✨ Fonctionnalités Clés
 
-### Running Locally
+- 🎲 **6 Parties Simultanées sur un Dé 3D** :
+  - Chaque face du dé est un échiquier autonome en cours.
+  - Infligez un échec et mat sur une face pour la conquérir définitivement.
+  - La partie continue sur les faces restantes jusqu'à conquête du cube.
+- 🔄 **Lancer Automatique du Dé** : Le dé bascule en 3D avec physique réaliste pour désigner la prochaine face à jouer.
+- 🔗 **Multijoueur Peer-to-Peer Résilient** :
+  - Reprise d'hôte automatique : si l'hôte se déconnecte, le second joueur prend le relais sans perdre la partie.
+  - Reconnexion fluide avec sauvegarde d'état FEN.
+- 🎨 **Esthétique Soignée** :
+  - Pièces vectorielles SVG officielles Lichess pour une lisibilité parfaite.
+  - Bascule instantanée entre la vue plateau 2D et le dé 3D interactif.
+  - Thème sombre moderne.
 
-Start the Vite development server:
+---
+
+## 🛠️ Lancement pour Développeurs (Code Source)
 
 ```bash
+git clone https://github.com/je-tu-il/DiceChess.git
+cd DiceChess
+npm install
 npm run dev
 ```
+Ouvrez `http://localhost:5173/`.
 
-Then, open your browser to the URL provided (usually `http://localhost:5173`).
-
-### Building for Production
-
+### Build de Production
 ```bash
 npm run build
 ```
 
-This will generate an optimized build in the `dist` folder.
+---
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Libre d'utilisation et de modification.
