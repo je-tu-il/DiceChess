@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Chess } from 'chess.js';
-import { peerManager } from '../utils/peerManager';
+import { peerManager } from '../utils/peerManager.js';
 
 /**
  * Game phases:
@@ -19,6 +19,14 @@ import { peerManager } from '../utils/peerManager';
 
 function createInitialGames() {
   return Array.from({ length: 6 }, () => new Chess().fen());
+}
+
+function tryMove(chess, move) {
+  try {
+    return chess.move(move);
+  } catch {
+    return null;
+  }
 }
 
 const useGameStore = create((set, get) => ({
@@ -182,6 +190,7 @@ const useGameStore = create((set, get) => ({
 
   setTopFace: (faceIndex) => {
     const state = get();
+    if (!Number.isInteger(faceIndex) || !state.games[faceIndex]) return;
     const chess = new Chess(state.games[faceIndex]);
 
     const overMsg = get().updateBoardStatuses(state.games);
@@ -190,9 +199,8 @@ const useGameStore = create((set, get) => ({
       return;
     }
 
-    if (chess.isGameOver()) {
-      // Should not be possible since we only roll unfinished faces, but just in case
-      set({ topFace: faceIndex, viewedFace: faceIndex, phase: 'PLAYER_TURN' });
+    if (get().boardStatus[faceIndex] !== null) {
+      set({ topFace: faceIndex, viewedFace: faceIndex, phase: 'READY' });
       return;
     }
 
@@ -248,10 +256,11 @@ const useGameStore = create((set, get) => ({
 
   makePlayerMove: (move) => {
     const state = get();
-    if (state.topFace === null) return;
+    if (state.phase !== 'PLAYER_TURN' || state.topFace === null || state.viewedFace !== state.topFace) return;
+    if (state.viewMoveIndex[state.topFace] !== -1) return;
 
     const chess = new Chess(state.games[state.topFace]);
-    const result = chess.move(move);
+    const result = tryMove(chess, move);
     if (!result) return;
 
     const newGames = [...state.games];
@@ -274,7 +283,7 @@ const useGameStore = create((set, get) => ({
         gameOverMsg: overMsg
       });
       // Online sync
-      if (state.gameMode.startsWith('online')) {
+      if (state.gameMode?.startsWith('online')) {
         peerManager.send({ type: 'MOVE_AND_END', face: state.topFace, move });
       }
       return;
@@ -288,7 +297,7 @@ const useGameStore = create((set, get) => ({
     // We assume availableFaces.length > 0 because overMsg was null
     const nextFace = availableFaces[Math.floor(Math.random() * availableFaces.length)];
 
-    if (state.gameMode.startsWith('online')) {
+    if (state.gameMode?.startsWith('online')) {
       // Send move and next roll face to peer
       peerManager.send({ type: 'MOVE_AND_ROLL', face: state.topFace, move, nextFace });
       
@@ -332,8 +341,9 @@ const useGameStore = create((set, get) => ({
 
   applyOpponentMove: (face, move, nextFace) => {
     const state = get();
+    if (state.phase === 'GAME_OVER' || !Number.isInteger(face) || !state.games[face]) return;
     const chess = new Chess(state.games[face]);
-    const result = chess.move(move);
+    const result = tryMove(chess, move);
     if (!result) return;
 
     const newGames = [...state.games];
@@ -369,10 +379,11 @@ const useGameStore = create((set, get) => ({
 
   handleResign: (byMe) => {
     const state = get();
-    if (byMe && state.gameMode.startsWith('online')) {
+    if (byMe && state.gameMode?.startsWith('online')) {
       peerManager.send({ type: 'RESIGN' });
     }
-    const winner = byMe ? (state.myColor === 'w' ? 'Black' : 'White') : state.myColor;
+    const winnerColor = byMe ? (state.myColor === 'w' ? 'b' : 'w') : state.myColor;
+    const winner = winnerColor === 'w' ? 'White' : 'Black';
     set({ phase: 'GAME_OVER', gameOverMsg: `${winner} wins by Resignation!` });
   },
 
