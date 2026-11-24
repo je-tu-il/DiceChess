@@ -933,3 +933,21 @@ html, body, #root {
   .mode-icon { width: 48px; height: 48px; font-size: 28px; }
   .mode-name { font-size: 18px; }
 }
+
+.menu-container { max-width: min(67rem, 100%); }
+.menu-title { color: #f5e6c8; letter-spacing: -.045em; text-shadow: none; }
+.menu-subtitle, .mode-desc { color: #d7c9dd; }
+.mode-card { min-height: 8rem; border: 1px solid #52425a; background: #21182a; box-shadow: none; }
+.mode-card:hover { border-color: #ca9c62; background: #302139; }
+.mode-name { color: #f6e8cf; }
+.roll-button { min-height: 44px; }
+.menu-overlay :focus-visible, .top-bar :focus-visible, .board-panel :focus-visible { outline: 3px solid #f3cb88; outline-offset: 3px; }
+@media (max-width: 640px) {
+  .menu-container { padding-inline: 1rem; }
+  .mode-card { min-height: 5.5rem; }
+  .menu-title { font-size: clamp(2.2rem, 11vw, 3.5rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-particles, .menu-overlay .particle { display: none; }
+  .mode-card { transition: none; }
+}
